@@ -1,5 +1,4 @@
---@name pk
---@author ```scripture
+--@name shared pk esp
 --@shared
 
 if CLIENT then
@@ -31,6 +30,11 @@ if CLIENT then
     local min_dot = 0.95
     local max_players_in_dot = 5
     local min_strict_dot = 0.999
+    
+    --[[-----------------------------------------
+        Tracking table
+    --]]-----------------------------------------
+    local players = {}
     --[[-----------------------------------------
         Player ESP
     --]]-----------------------------------------
@@ -38,8 +42,6 @@ if CLIENT then
     local ang_zero = Angle(0, 0, 0)
     if player() == owner() then
         enableHud(owner(), true)
-        
-        local AccountedForPlayers = {}
         --[[
         -- this doesnt work somehow
         hook.add("NetworkEntityCreated", "RetrackNewlyValidPlayers", function(ent)
@@ -48,6 +50,7 @@ if CLIENT then
         end)
         --]]
         hook.add("PostDrawPlayer", "DevBox", function(ply, flags)
+            if not players[ply] then return end
             local m = Matrix()
             render.pushMatrix(m)
             render.setColor(box_color)
@@ -58,8 +61,7 @@ if CLIENT then
         end)
       hook.add("DrawHUD", "Nicks", function()
             local playersindot = 0 
-            for _, ply in ipairs(find.allPlayers()) do
-                --if ply:getSteamID() ~= "76561199851758072" then continue end
+            for _, ply in ipairs(players) do
                 if ply == player() then continue end
                 local DistToTarg = (ply:getPos() - player():getShootPos()):getNormalized()
                 local dot = player():getAimVector():dot(DistToTarg)
@@ -83,17 +85,19 @@ if CLIENT then
         end)
         
         hook.add("Think", "Chams", function()
-            for _, ply in ipairs(find.allPlayers()) do
+            for _, ply in ipairs(players) do
                 ply:setMaterial(player_cham_mat) -- have to always set their material, because theres seemingly no way to only set it once on EnterPVS
                 ply:setColor(cham_color)
             end
         end)
+        
         hook.add("Removed", "ResetChams", function()
-            for _, ply in ipairs(find.allPlayers()) do
-                ply:setMaterial("")
-                ply:setColor(color_white) 
+            for _, ent in ipairs(find.all()) do
+                ent:setMaterial("")
+                ent:setColor(color_white)
             end
         end)
+        
         --[[-----------------------------------------
             Prop ESP
         --]]-----------------------------------------
@@ -107,5 +111,15 @@ if CLIENT then
                 ent:setColor(prop_color)
             end)
         end)
+        
+        hook.add("HUDConnected", "AddPlayerToTrack", function(ent, ply)
+            players[ply] = true
+        end)
+        hook.add("HUDDisconnected", "RemovePlayerToTrack", function(ent, ply)
+            players[ply] = nil
+        end)
     end
+elseif SERVER then 
+    local hud = prop.createComponent(chip():getPos(), Angle(0,0,0), "starfall_hud", "models/hunter/blocks/cube1x1x1.mdl", true)
+    hud:linkComponent(chip())
 end

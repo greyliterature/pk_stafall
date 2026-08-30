@@ -101,20 +101,15 @@ if CLIENT then
         
         hook.add("HUDDisconnected", "ResetChams", function(ent, ply)
             for _, ent in ipairs(find.all()) do
+                if not isValid(ent) then continue end
                 ent:setMaterial("")
                 ent:setColor(color_white)
             end
         end)
-        
-        if player() == owner() then
-            enableHud(owner(), true)
-            RunThings()
-        end
         --[[-----------------------------------------
             Prop ESP
         --]]-----------------------------------------
         hook.add("OnEntityCreated", "prop_chams", function(ent)
-            if true then return end
             if not isValid(ent) then return end
             if ent:getClass() ~= "prop_physics" then return end
             if timer.getTimersLeft() == 0 then return end
@@ -131,7 +126,11 @@ if CLIENT then
         end)
         --]]
     end
-    
+
+    if player() == owner() then
+        enableHud(owner(), true)
+        RunThings()
+    end
     net.receive("UpdateTrackingTable", function()
         players = net.readTable()
         RunThings()

@@ -153,21 +153,25 @@ elseif SERVER then
     hook.add("HudConnected", "AddPlayerToTrack", function(ent, ply)
         players[ply] = true
         local numkeys = table.count(players)
-        net.start("UpdateTrackingTable")
-        net.writeUInt(numkeys, 32)
-        for ply, _ in pairs(players) do
-            net.writeEntity(ply)
+        for ply, _ in pairs(players) do 
+            net.start("UpdateTrackingTable")
+            net.writeUInt(numkeys, 32)
+            for plyy, _ in pairs(players) do
+                net.writeEntity(plyy)
+            end
+            net.send(ply)
         end
-        net.send(ply)
     end)
     hook.add("HUDDisconnected", "RemovePlayerToTrack", function(ent, ply)
         players[ply] = nil
         local numkeys = table.count(players)
-        net.start("UpdateTrackingTable")
-        net.writeUInt(numkeys, 32)
-        for ply, _ in pairs(players) do
-            net.writeEntity(ply)
+        for ply, _ in pairs(players) do 
+            net.start("UpdateTrackingTable")
+            net.writeUInt(numkeys, 32)
+            for plyy, _ in pairs(players) do
+                net.writeEntity(plyy)
+            end
+            net.send(ply)
         end
-        net.send(ply)
     end)
 end

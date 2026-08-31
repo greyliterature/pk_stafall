@@ -112,6 +112,7 @@ if CLIENT then
         hook.add("OnEntityCreated", "prop_chams", function(ent)
             if not isValid(ent) then return end
             if ent:getClass() ~= "prop_physics" then return end
+            if ent:getOwner() and not players[ent:getOwner()] then return end
             if timer.getTimersLeft() == 0 then return end
             timer.simple(0.1, function()
                 if not isValid(ent) then return end
@@ -125,6 +126,7 @@ if CLIENT then
             players[ply] = true
         end)
         --]]
+        --printHud("hi test", table.count(players))
     end
 
     if player() == owner() then
@@ -132,22 +134,40 @@ if CLIENT then
         RunThings()
     end
     net.receive("UpdateTrackingTable", function()
-        players = net.readTable()
-        RunThings()
+        local numkeys = net.readUInt(32)
+        players = {}
+        for i = 1, numkeys do
+            players[net.readEntity()] = true
+        end
+    end)
+    
+    hook.add("HUDConnected", "RunThings", function(ent, ply)
+        if ply == player() then
+            printHud(table.count(players))
+            RunThings() 
+        end
     end)
 elseif SERVER then 
     local hud = prop.createComponent(chip():getPos(), Angle(0,0,0), "starfall_hud", "models/hunter/blocks/cube1x1x1.mdl", true)
     hud:linkComponent(chip())
     hook.add("HudConnected", "AddPlayerToTrack", function(ent, ply)
         players[ply] = true
+        local numkeys = table.count(players)
         net.start("UpdateTrackingTable")
-        net.writeTable(players)
+        net.writeUInt(numkeys, 32)
+        for ply, _ in pairs(players) do
+            net.writeEntity(ply)
+        end
         net.send(ply)
     end)
     hook.add("HUDDisconnected", "RemovePlayerToTrack", function(ent, ply)
         players[ply] = nil
+        local numkeys = table.count(players)
         net.start("UpdateTrackingTable")
-        net.writeTable(players)
+        net.writeUInt(numkeys, 32)
+        for ply, _ in pairs(players) do
+            net.writeEntity(ply)
+        end
         net.send(ply)
     end)
 end

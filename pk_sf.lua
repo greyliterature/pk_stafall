@@ -114,11 +114,11 @@ if CLIENT then
             if ent:getClass() ~= "prop_physics" then return end
             if ent:getOwner() and not players[ent:getOwner()] then return end
             if timer.getTimersLeft() == 0 then return end
-            timer.simple(0, function()
+            --timer.simple(0, function()
                 if not isValid(ent) then return end
                 ent:setMaterial(prop_cham_mat)
                 ent:setColor(prop_color)
-            end)
+            --end)
         end)
         --[[
         hook.add("HUDConnected", "AddPlayerToTrack", function(ent, ply)
@@ -139,6 +139,7 @@ if CLIENT then
         for i = 1, numkeys do
             players[net.readEntity()] = true
         end
+        
         for _, ply in ipairs(find.allPlayers()) do
             if not players[ply] then
                 ply:setMaterial("")
@@ -151,6 +152,13 @@ if CLIENT then
         if ply == player() then
             printHud(table.count(players))
             RunThings() 
+        else
+            players[ply] = true
+        end
+    end)
+   hook.add("HUDDisconnected", "RemovePlayerToTrack", function(ent, ply)
+        if ply ~= player() then
+            players[ply] = nil
         end
     end)
 elseif SERVER then 
